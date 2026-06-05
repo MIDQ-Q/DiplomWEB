@@ -12,8 +12,10 @@ except ImportError:
 
 class HammingCoder:
     def __init__(self, n: int = 7, k: int = 4):
+        # ✅ Валидация: только стандартные коды Хэмминга
         valid = {(7,4):3, (15,11):4, (31,26):5, (63,57):6, (127,120):7}
-        if (n,k) not in valid: raise ValueError(f"Hamming: допустимы только {(list(valid.keys()))}, получено ({n},{k})")
+        if (n,k) not in valid:
+            raise ValueError(f"Hamming: допустимы только {(list(valid.keys()))}, получено ({n},{k})")
         self.n, self.k = n, k
         self.rate = k/n
         self.name = f"Hamming({n},{k})"
@@ -104,7 +106,10 @@ def create_coder(cfg: dict) -> Tuple[Optional[object], float]:
     if t == "hamming":
         c = HammingCoder(n=int(cfg.get("n",7)), k=int(cfg.get("k",4)))
     elif t in ("reed-solomon", "rs"):
-        c = ReedSolomonCoder(nsym=int(cfg.get("rs_nsym",10)), nsize=int(cfg.get("rs_nsize",255)))
+        c = ReedSolomonCoder(
+            nsym=int(cfg.get("rs_nsym",10)), nsize=int(cfg.get("rs_nsize",255)),
+            fcr=int(cfg.get("rs_fcr",0)), prim=int(cfg.get("rs_prim","0x11d"),16)
+        )
     else: raise ValueError(f"Неизвестный кодек: {t}")
     return c, c.rate
 

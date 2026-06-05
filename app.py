@@ -129,7 +129,7 @@ with st.sidebar:
         imp_prob = c1.number_input("Вероятность появления помехи (p)", min_value=1e-6, max_value=0.1, value=0.001, format="%.4f")
         imp_snr = c2.number_input("Отношение сигнал/помеха импульса (дБ)", min_value=0.0, max_value=40.0, value=20.0)
 
-    st.header("Перемежение (Интерливинг)")
+    st.header("Перемежение")
     il_enabled = st.checkbox("Включить блочное перемежение", value=False)
     il_depth = 8
     il_burst = 32

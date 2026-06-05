@@ -1,3 +1,4 @@
+# coding.py
 import numpy as np
 import logging
 from typing import Tuple, Optional
@@ -12,7 +13,7 @@ except ImportError:
 
 class HammingCoder:
     def __init__(self, n: int = 7, k: int = 4):
-        # ✅ Валидация: только стандартные коды Хэмминга
+        # Валидация стандартных кодов Хэмминга
         valid = {(7,4):3, (15,11):4, (31,26):5, (63,57):6, (127,120):7}
         if (n,k) not in valid:
             raise ValueError(f"Hamming: допустимы только {(list(valid.keys()))}, получено ({n},{k})")
@@ -32,10 +33,14 @@ class HammingCoder:
         for row, d in enumerate(dp):
             G[row, d] = 1
             for i, p in enumerate(pp): G[row, p] = (d+1)>>i & 1
+
+        # ✅ Исправлено: явное преобразование в Python-список перед join()
         table = {}
         for j in range(self.n):
-            e = np.zeros(self.n, dtype=np.uint8); e[j]=1
-            table[int("".join((H@e)%2).astype(str), 2)] = j
+            e = np.zeros(self.n, dtype=np.uint8)
+            e[j] = 1
+            syndrome = ((H @ e) % 2).tolist()
+            table[int("".join(str(int(x)) for x in syndrome), 2)] = j
         return G, H, table
 
     def encode(self, bits: np.ndarray) -> np.ndarray:
@@ -52,12 +57,19 @@ class HammingCoder:
         corr, det = 0, 0
         dec = np.empty((len(blocks), self.k), dtype=np.uint8)
         dp = [j for j in range(self.n) if j not in [2**i-1 for i in range(int(np.log2(self.n+1)))]]
+
         for i, b in enumerate(blocks):
-            s = int("".join((self._H@b)%2).astype(str), 2)
+            # ✅ Исправлено: безопасное преобразование синдрома в бинарную строку
+            syndrome = ((self._H @ b) % 2).tolist()
+            s = int("".join(str(int(x)) for x in syndrome), 2)
+
             if s!=0:
                 if s in self._syn_table:
-                    b = b.copy(); b[self._syn_table[s]] ^= 1; corr += 1
-                else: det += 1
+                    b = b.copy()
+                    b[self._syn_table[s]] ^= 1
+                    corr += 1
+                else:
+                    det += 1
             dec[i] = b[dp]
         return dec.ravel(), {"corrected": corr, "detected": det, "blocks": len(blocks)}
 
